@@ -449,7 +449,6 @@ Router.prototype.route = function route (path) {
  * @public
  */
 Router.prototype.getRoutes = function getRoutes () {
-  const routes = []
   const stack = this.stack
 
   const options = {
@@ -457,9 +456,7 @@ Router.prototype.getRoutes = function getRoutes () {
     caseSensitive: this.caseSensitive
   }
 
-  collectRoutes(stack, '', routes, options)
-
-  return routes
+  return collectRoutes(stack, '', options)
 }
 
 // create Router#VERB functions
@@ -470,26 +467,6 @@ methods.concat('all').forEach(function (method) {
     return this
   }
 })
-
-/**
- * Add a route to the map with the given path and methods.
- * @param {Map} routeMap
- * @param {string} path
- * @param {Array} methods
- * @private
- */
-function addRouteToMap (routeMap, path, methods, options) {
-  const { keys } = pathRegexp.pathToRegexp(path)
-
-  routeMap.push(
-    {
-      path,
-      methods: [...methods],
-      keys,
-      options: { strict: options.strict, caseSensitive: options.caseSensitive }
-    }
-  )
-}
 
 /**
  * Normalize a path by removing trailing slashes.
@@ -517,44 +494,85 @@ function normalizePath (path) {
  * @param {Map} routeMap - The map to store collected routes
  * @private
  */
-function collectRoutes (stack, prefix, routeMap, options) {
+function collectRoutes (stack, prefix, options) {
+  const routes = []
+
   for (const layer of stack) {
-    // for routes without a .use
+    // route layer (has methods)
     if (layer.pathPatterns && layer.route) {
       const methods = Object.keys(layer.route.methods).map((method) => method.toUpperCase())
 
       if (Array.isArray(layer.pathPatterns)) {
         for (const pathPattern of layer.pathPatterns) {
-          const fullPath = prefix === '/' ? pathPattern : normalizePath(prefix) + pathPattern
-          addRouteToMap(routeMap, fullPath, methods, options)
-        }
-      } else {
-        const fullPath = prefix === '/' ? layer.pathPatterns : prefix + layer.pathPatterns
-        addRouteToMap(routeMap, fullPath, methods, options)
-      }
-    }
-
-    // for layers with a .use (mounted routers)
-    if (layer.pathPatterns && layer.handle && layer.handle.stack && !layer.route) {
-      if (Array.isArray(layer.pathPatterns)) {
-        for (const pathPattern of layer.pathPatterns) {
-          const pathPrefix = prefix === '/' ? normalizePath(pathPattern) : prefix + normalizePath(pathPattern)
-
-          collectRoutes(layer.handle.stack, pathPrefix, routeMap, {
-            strict: layer.handle.strict,
-            caseSensitive: layer.handle.caseSensitive
+          const path = (prefix === '' ? normalizePath(pathPattern) : normalizePath(prefix) + pathPattern)
+          let keys
+          if (!(pathPattern instanceof RegExp)) {
+            const pathKeys = pathRegexp.pathToRegexp(pathPattern).keys
+            if (pathKeys.length > 0) {
+              keys = pathKeys
+            }
+          }
+          routes.push({
+            path,
+            keys,
+            methods,
+            router: undefined,
+            options: { strict: options.strict, caseSensitive: options.caseSensitive }
           })
         }
       } else {
-        const pathPrefix = prefix === '/' ? normalizePath(layer.pathPatterns) : prefix + normalizePath(layer.pathPatterns)
+        let keys
+        if (!(layer.pathPatterns instanceof RegExp)) {
+          const pathKeys = pathRegexp.pathToRegexp(layer.pathPatterns).keys
+          if (pathKeys.length > 0) {
+            keys = pathKeys
+          }
+        }
 
-        collectRoutes(layer.handle.stack, pathPrefix, routeMap, {
-          strict: layer.handle.strict,
-          caseSensitive: layer.handle.caseSensitive
+        const path = (prefix === '' ? normalizePath(layer.pathPatterns) : normalizePath(prefix) + layer.pathPatterns)
+        routes.push({
+          path,
+          keys,
+          methods,
+          router: undefined,
+          options: { strict: options.strict, caseSensitive: options.caseSensitive }
+        })
+      }
+    }
+
+    // mounted router (use)
+    if (layer.pathPatterns && layer.handle && layer.handle.stack && !layer.route) {
+      if (Array.isArray(layer.pathPatterns)) {
+        for (const pathPattern of layer.pathPatterns) {
+          const mountPath = (prefix === '' ? normalizePath(pathPattern) : normalizePath(prefix) + normalizePath(pathPattern))
+
+          const inner = collectRoutes(layer.handle.stack, '', { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive })
+
+          routes.push({
+            path: mountPath,
+            keys: undefined,
+            methods: undefined,
+            router: inner.length ? inner : undefined,
+            options: { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
+          })
+        }
+      } else {
+        const mountPath = (prefix === '' ? normalizePath(layer.pathPatterns) : normalizePath(prefix) + normalizePath(layer.pathPatterns))
+
+        const inner = collectRoutes(layer.handle.stack, '', { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive })
+
+        routes.push({
+          path: mountPath,
+          keys: undefined,
+          methods: undefined,
+          router: inner.length ? inner : undefined,
+          options: { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
         })
       }
     }
   }
+
+  return routes
 }
 
 /**
