@@ -160,13 +160,13 @@ describe('getRoutes', function () {
     ])
   })
 
-  it.skip('should correctly flatten deeply nested router hierarchies with multiple levels', function () {
+  it('should correctly flatten deeply nested router hierarchies with multiple levels', function () {
     const router = new Router()
     const inner = new Router()
     const subinner = new Router()
 
     subinner.put('/t5', noop)
-    // subinner.all(/^\/[a-z]oo$/, noop)
+    subinner.all(/^\/[a-z]oo$/, noop)
     subinner.use(noop)
 
     inner.use('/t3', subinner)
@@ -181,18 +181,103 @@ describe('getRoutes', function () {
     router.use('/test1', noop)
 
     assert.deepStrictEqual(router.getRoutes(), [
-      { path: '/t2/t3/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      // { path: '/t2/t3/^\\/[a-z]oo$/', methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t2/t4', methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t2/', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t5/t3/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      // { path: '/t5/t3/^\\/[a-z]oo$/', methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t5/t4', methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t5/', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t7/t3/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      // { path: '/t7/t3/^\\/[a-z]oo$/', methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t7/t4', methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } },
-      { path: '/t7/', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined } }
+      {
+        path: '/t2',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: undefined, caseSensitive: undefined },
+        router: [
+          {
+            path: '/t3',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: [
+              { path: '/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+            ]
+          },
+          {
+            path: '/t4',
+            methods: ['_ALL'],
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: undefined
+          }, 
+           {
+            path: '/',
+            methods: ['GET'],
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: undefined
+          },
+        ]
+      },
+      {
+        path: '/t5',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: undefined, caseSensitive: undefined },
+      router: [
+          {
+            path: '/t3',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: [
+              { path: '/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+            ]
+          },
+          {
+            path: '/t4',
+            methods: ['_ALL'],
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: undefined
+          },  
+          {
+            path: '/',
+            methods: ['GET'],
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: undefined
+          },
+        ]
+      },
+      {
+        path: '/t7',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: undefined, caseSensitive: undefined },
+        router: [
+          {
+            path: '/t3',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: [
+              { path: '/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+            ]
+          },
+          {
+            path: '/t4',
+            methods: ['_ALL'],
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: undefined
+          },  
+          {
+            path: '/',
+            methods: ['GET'],
+            keys: undefined,
+            options: { strict: undefined, caseSensitive: undefined },
+            router: undefined
+          },
+        ]
+      }
+
     ])
   })
 
