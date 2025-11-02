@@ -451,6 +451,7 @@ Router.prototype.route = function route (path) {
 Router.prototype.getRoutes = function getRoutes () {
   const stack = this.stack
 
+  // TODO: end option
   const options = {
     strict: this.strict,
     caseSensitive: this.caseSensitive
@@ -491,7 +492,6 @@ function normalizePath (path) {
  *
  * @param {Array} stack - The router stack to collect routes from
  * @param {string} prefix - The path prefix to prepend to routes
- * @param {Map} routeMap - The map to store collected routes
  * @private
  */
 function collectRoutes (stack, prefix, options) {
@@ -553,7 +553,7 @@ function collectRoutes (stack, prefix, options) {
             keys: undefined,
             methods: undefined,
             router: inner.length ? inner : undefined,
-            options: { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
+            options
           })
         }
       } else {
@@ -566,7 +566,7 @@ function collectRoutes (stack, prefix, options) {
           keys: undefined,
           methods: undefined,
           router: inner.length ? inner : undefined,
-          options: { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
+          options
         })
       }
     }

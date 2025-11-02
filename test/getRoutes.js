@@ -194,7 +194,7 @@ describe('getRoutes', function () {
             options: { strict: undefined, caseSensitive: undefined },
             router: [
               { path: '/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined },
-              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined }
             ]
           },
           {
@@ -203,14 +203,14 @@ describe('getRoutes', function () {
             keys: undefined,
             options: { strict: undefined, caseSensitive: undefined },
             router: undefined
-          }, 
-           {
+          },
+          {
             path: '/',
             methods: ['GET'],
             keys: undefined,
             options: { strict: undefined, caseSensitive: undefined },
             router: undefined
-          },
+          }
         ]
       },
       {
@@ -218,7 +218,7 @@ describe('getRoutes', function () {
         methods: undefined,
         keys: undefined,
         options: { strict: undefined, caseSensitive: undefined },
-      router: [
+        router: [
           {
             path: '/t3',
             methods: undefined,
@@ -226,7 +226,7 @@ describe('getRoutes', function () {
             options: { strict: undefined, caseSensitive: undefined },
             router: [
               { path: '/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined },
-              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined }
             ]
           },
           {
@@ -235,14 +235,14 @@ describe('getRoutes', function () {
             keys: undefined,
             options: { strict: undefined, caseSensitive: undefined },
             router: undefined
-          },  
+          },
           {
             path: '/',
             methods: ['GET'],
             keys: undefined,
             options: { strict: undefined, caseSensitive: undefined },
             router: undefined
-          },
+          }
         ]
       },
       {
@@ -258,7 +258,7 @@ describe('getRoutes', function () {
             options: { strict: undefined, caseSensitive: undefined },
             router: [
               { path: '/t5', methods: ['PUT'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined },
-              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined,options: { strict: undefined, caseSensitive: undefined }, router: undefined },
+              { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined }, router: undefined }
             ]
           },
           {
@@ -267,14 +267,14 @@ describe('getRoutes', function () {
             keys: undefined,
             options: { strict: undefined, caseSensitive: undefined },
             router: undefined
-          },  
+          },
           {
             path: '/',
             methods: ['GET'],
             keys: undefined,
             options: { strict: undefined, caseSensitive: undefined },
             router: undefined
-          },
+          }
         ]
       }
 
@@ -307,12 +307,12 @@ describe('getRoutes', function () {
     ])
   })
 
-  it.skip('should preserve router configuration options from parent to child routers', function () {
+  it('should preserve router configuration options from parent to child routers', function () {
     const router = new Router({ strict: true, caseSensitive: true })
     const inner = new Router({ strict: true, caseSensitive: false })
     const subinner = new Router({ strict: false, caseSensitive: false })
 
-    subinner.put('/t5', noop)
+    subinner.put('/t8', noop)
     subinner.use(noop)
 
     inner.use('/t3', subinner)
@@ -327,16 +327,94 @@ describe('getRoutes', function () {
     router.get('/test', noop)
 
     assert.deepStrictEqual(router.getRoutes(), [
-      { path: '/t2/t3/t5', methods: ['PUT'], keys: undefined, options: { strict: false, caseSensitive: false } },
-      { path: '/t2/t4', methods: ['_ALL'], keys: undefined, options: { strict: true, caseSensitive: false } },
-      { path: '/t2/', methods: ['GET'], keys: undefined, options: { strict: true, caseSensitive: false } },
-      { path: '/t5/t3/t5', methods: ['PUT'], keys: undefined, options: { strict: false, caseSensitive: false } },
-      { path: '/t5/t4', methods: ['_ALL'], keys: undefined, options: { strict: true, caseSensitive: false } },
-      { path: '/t5/', methods: ['GET'], keys: undefined, options: { strict: true, caseSensitive: false } },
-      { path: '/t7/t3/t5', methods: ['PUT'], keys: undefined, options: { strict: false, caseSensitive: false } },
-      { path: '/t7/t4', methods: ['_ALL'], keys: undefined, options: { strict: true, caseSensitive: false } },
-      { path: '/t7/', methods: ['GET'], keys: undefined, options: { strict: true, caseSensitive: false } },
-      { path: '/test', methods: ['GET'], keys: undefined, options: { strict: true, caseSensitive: true } }
+      {
+        path: '/t2',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: true, caseSensitive: true },
+        router: [
+          {
+            path: '/t3',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: [
+              { path: '/t8', methods: ['PUT'], keys: undefined, options: { strict: false, caseSensitive: false }, router: undefined }
+            ]
+          }, {
+            path: '/t4',
+            methods: ['_ALL'],
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: undefined
+          }, {
+            path: '/',
+            methods: ['GET'],
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: undefined
+          }
+        ]
+      },
+      {
+        path: '/t5',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: true, caseSensitive: true },
+        router: [
+          {
+            path: '/t3',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: [
+              { path: '/t8', methods: ['PUT'], keys: undefined, options: { strict: false, caseSensitive: false }, router: undefined }
+            ]
+          }, {
+            path: '/t4',
+            methods: ['_ALL'],
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: undefined
+          }, {
+            path: '/',
+            methods: ['GET'],
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: undefined
+          }
+        ]
+      },
+      {
+        path: '/t7',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: true, caseSensitive: true },
+        router: [
+          {
+            path: '/t3',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: [
+              { path: '/t8', methods: ['PUT'], keys: undefined, options: { strict: false, caseSensitive: false }, router: undefined }
+            ]
+          }, {
+            path: '/t4',
+            methods: ['_ALL'],
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: undefined
+          }, {
+            path: '/',
+            methods: ['GET'],
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: undefined
+          }
+        ]
+      },
+      { path: '/test', methods: ['GET'], keys: undefined, options: { strict: true, caseSensitive: true }, router: undefined }
     ])
   })
 
