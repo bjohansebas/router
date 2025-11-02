@@ -24,8 +24,8 @@ describe('getRoutes', function () {
     assert.deepStrictEqual(router.getRoutes(),
       [
         { path: '/', methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
-        { path: '/test2', methods: [], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined }, // Todo: Investigate
-        { path: '/test', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
+        { path: '/test2/', methods: [], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined }, // Todo: Investigate
+        { path: '/test/', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
         { path: /^\/[a-z]oo$/, methods: ['_ALL'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
         { path: '/foo', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
         { path: '/bar', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
@@ -77,7 +77,7 @@ describe('getRoutes', function () {
       { path: '/test', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
       { path: '/test', methods: ['GET'], keys: undefined, options: { strict: undefined, caseSensitive: undefined, end: true }, router: undefined },
       {
-        path: '/test',
+        path: '/test/',
         methods: undefined,
         keys: undefined,
         options: { strict: undefined, caseSensitive: undefined, end: false },
@@ -137,7 +137,7 @@ describe('getRoutes', function () {
           }]
       },
       {
-        path: '/test4',
+        path: '/test4/',
         methods: undefined,
         keys: undefined,
         options: { strict: undefined, caseSensitive: undefined, end: false },

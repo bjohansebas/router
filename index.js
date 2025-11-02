@@ -456,7 +456,7 @@ Router.prototype.getRoutes = function getRoutes () {
     caseSensitive: this.caseSensitive
   }
 
-  return collectRoutes(stack, '', options)
+  return collectRoutes(stack, options)
 }
 
 // create Router#VERB functions
@@ -469,31 +469,13 @@ methods.concat('all').forEach(function (method) {
 })
 
 /**
- * Normalize a path by removing trailing slashes.
- * @param {string} path
- * @return {string} normalized path
- * @private
- */
-function normalizePath (path) {
-  if (typeof path !== 'string') {
-    return path
-  }
-
-  if (path.endsWith('/') && path.length > 1) {
-    return path.slice(0, -1)
-  }
-
-  return path
-}
-
-/**
  * Collect routes from a router stack recursively.
  *
  * @param {Array} stack - The router stack to collect routes from
- * @param {string} prefix - The path prefix to prepend to routes
+ * @param {object} options - The router options
  * @private
  */
-function collectRoutes (stack, prefix, options) {
+function collectRoutes (stack, options) {
   const routes = []
 
   for (const layer of stack) {
@@ -503,16 +485,18 @@ function collectRoutes (stack, prefix, options) {
 
       if (Array.isArray(layer.pathPatterns)) {
         for (const pathPattern of layer.pathPatterns) {
-          const path = (prefix === '' ? normalizePath(pathPattern) : normalizePath(prefix) + pathPattern)
           let keys
+
           if (!(pathPattern instanceof RegExp)) {
+            // TODO: keys for regex paths
             const pathKeys = pathRegexp.pathToRegexp(pathPattern).keys
             if (pathKeys.length > 0) {
               keys = pathKeys
             }
           }
+
           routes.push({
-            path,
+            path: pathPattern,
             keys,
             methods,
             router: undefined,
@@ -528,9 +512,8 @@ function collectRoutes (stack, prefix, options) {
           }
         }
 
-        const path = (prefix === '' ? normalizePath(layer.pathPatterns) : normalizePath(prefix) + layer.pathPatterns)
         routes.push({
-          path,
+          path: layer.pathPatterns,
           keys,
           methods,
           router: undefined,
@@ -543,16 +526,13 @@ function collectRoutes (stack, prefix, options) {
     if (layer.pathPatterns && layer.handle && layer.handle.stack && !layer.route) {
       if (Array.isArray(layer.pathPatterns)) {
         for (const pathPattern of layer.pathPatterns) {
-          const mountPath = (prefix === '' ? normalizePath(pathPattern) : normalizePath(prefix) + normalizePath(pathPattern))
-
           const inner = collectRoutes(
             layer.handle.stack,
-            '',
             { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end }
           )
 
           routes.push({
-            path: mountPath,
+            path: pathPattern,
             keys: undefined,
             methods: undefined,
             router: inner.length ? inner : undefined,
@@ -560,14 +540,13 @@ function collectRoutes (stack, prefix, options) {
           })
         }
       } else {
-        const mountPath = (prefix === '' ? normalizePath(layer.pathPatterns) : normalizePath(prefix) + normalizePath(layer.pathPatterns))
         const inner = collectRoutes(
           layer.handle.stack,
-          '',
-          { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end })
+          { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end }
+        )
 
         routes.push({
-          path: mountPath,
+          path: layer.pathPatterns,
           keys: undefined,
           methods: undefined,
           router: inner.length ? inner : undefined,
