@@ -418,7 +418,7 @@ describe('getRoutes', function () {
     ])
   })
 
-  it.skip('should handle multiple routers with different configuration options mounted at the same path', function () {
+  it('should handle multiple routers with different configuration options mounted at the same path', function () {
     const router = new Router({ strict: true, caseSensitive: true })
     const inner = new Router({ strict: true, caseSensitive: false })
     const otherInner = new Router({ strict: true, caseSensitive: true })
@@ -436,10 +436,57 @@ describe('getRoutes', function () {
     router.use(inner)
 
     assert.deepStrictEqual(router.getRoutes(), [
-      { path: '/t2/:t5', methods: ['PUT'], keys: [{ name: 't5', type: 'param' }], options: { strict: true, caseSensitive: true } },
-      { path: '/t2/:t6', methods: ['POST'], keys: [{ name: 't6', type: 'param' }], options: { strict: true, caseSensitive: true } },
-      { path: '/t2/:t5', methods: ['PUT'], keys: [{ name: 't5', type: 'param' }], options: { strict: true, caseSensitive: false } },
-      { path: '/t2/:t6', methods: ['GET'], keys: [{ name: 't6', type: 'param' }], options: { strict: true, caseSensitive: false } }
+      {
+        path: '/',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: true, caseSensitive: true },
+        router: [
+          {
+            path: '/t2',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: [
+              {
+                path: '/:t5',
+                methods: ['PUT'],
+                keys: [{ name: 't5', type: 'param' }],
+                options: { strict: true, caseSensitive: true },
+                router: undefined
+              },
+              {
+                path: '/:t6',
+                methods: ['POST'],
+                keys: [{ name: 't6', type: 'param' }],
+                options: { strict: true, caseSensitive: true },
+                router: undefined
+              }
+            ]
+          },
+          {
+            path: '/t2',
+            methods: undefined,
+            keys: undefined,
+            options: { strict: true, caseSensitive: false },
+            router: [{
+              path: '/:t5',
+              methods: ['PUT'],
+              keys: [{ name: 't5', type: 'param' }],
+              options: { strict: true, caseSensitive: false },
+              router: undefined
+            },
+            {
+              path: '/:t6',
+              methods: ['GET'],
+              keys: [{ name: 't6', type: 'param' }],
+              options: { strict: true, caseSensitive: false },
+              router: undefined
+            }]
+
+          }
+        ]
+      }
     ])
   })
 })
