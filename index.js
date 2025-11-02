@@ -451,7 +451,6 @@ Router.prototype.route = function route (path) {
 Router.prototype.getRoutes = function getRoutes () {
   const stack = this.stack
 
-  // TODO: end option
   const options = {
     strict: this.strict,
     caseSensitive: this.caseSensitive
@@ -517,7 +516,7 @@ function collectRoutes (stack, prefix, options) {
             keys,
             methods,
             router: undefined,
-            options: { strict: options.strict, caseSensitive: options.caseSensitive }
+            options: { ...options, end: layer.end }
           })
         }
       } else {
@@ -535,7 +534,7 @@ function collectRoutes (stack, prefix, options) {
           keys,
           methods,
           router: undefined,
-          options: { strict: options.strict, caseSensitive: options.caseSensitive }
+          options: { ...options, end: layer.end }
         })
       }
     }
@@ -546,27 +545,33 @@ function collectRoutes (stack, prefix, options) {
         for (const pathPattern of layer.pathPatterns) {
           const mountPath = (prefix === '' ? normalizePath(pathPattern) : normalizePath(prefix) + normalizePath(pathPattern))
 
-          const inner = collectRoutes(layer.handle.stack, '', { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive })
+          const inner = collectRoutes(
+            layer.handle.stack,
+            '',
+            { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end }
+          )
 
           routes.push({
             path: mountPath,
             keys: undefined,
             methods: undefined,
             router: inner.length ? inner : undefined,
-            options
+            options: { ...options, end: layer.end }
           })
         }
       } else {
         const mountPath = (prefix === '' ? normalizePath(layer.pathPatterns) : normalizePath(prefix) + normalizePath(layer.pathPatterns))
-
-        const inner = collectRoutes(layer.handle.stack, '', { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive })
+        const inner = collectRoutes(
+          layer.handle.stack,
+          '',
+          { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end })
 
         routes.push({
           path: mountPath,
           keys: undefined,
           methods: undefined,
           router: inner.length ? inner : undefined,
-          options
+          options: { ...options, end: layer.end }
         })
       }
     }
