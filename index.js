@@ -528,7 +528,7 @@ function collectRoutes (stack, options) {
         for (const pathPattern of layer.pathPatterns) {
           const inner = collectRoutes(
             layer.handle.stack,
-            { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end }
+            { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
           )
 
           routes.push({
@@ -542,7 +542,7 @@ function collectRoutes (stack, options) {
       } else {
         const inner = collectRoutes(
           layer.handle.stack,
-          { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive, end: layer.handle.end }
+          { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
         )
 
         routes.push({
