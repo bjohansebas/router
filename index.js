@@ -496,6 +496,7 @@ function collectRoutes (stack, options) {
           }
 
           routes.push({
+            name: layer.name,
             path: pathPattern,
             keys,
             methods,
@@ -513,6 +514,7 @@ function collectRoutes (stack, options) {
         }
 
         routes.push({
+          name: layer.name,
           path: layer.pathPatterns,
           keys,
           methods,
@@ -532,6 +534,7 @@ function collectRoutes (stack, options) {
           )
 
           routes.push({
+            name: layer.name,
             path: pathPattern,
             keys: undefined,
             methods: undefined,
@@ -546,6 +549,7 @@ function collectRoutes (stack, options) {
         )
 
         routes.push({
+          name: layer.name,
           path: layer.pathPatterns,
           keys: undefined,
           methods: undefined,
