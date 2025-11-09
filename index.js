@@ -552,6 +552,13 @@ function collectRoutes (stack, options) {
   return routes
 }
 
+/**
+ * Extracts parameter/key descriptors from a route pattern.
+ *
+ * @param {string|RegExp} pattern - Route pattern to analyze (path string or RegExp).
+ * @returns {Array<Object>|undefined} Array of key descriptor objects (each with at least a `name` property), or `undefined` if none found.
+ * @private
+ */
 function extractPatternKeys (pattern) {
   if (pattern instanceof RegExp) {
     const keys = []
