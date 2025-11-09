@@ -332,6 +332,95 @@ describe('getRoutes', function () {
     ])
   })
 
+  it('should return keys for routes with regex', function () {
+    const router = new Router()
+    const subRouter = new Router()
+
+    subRouter.get(/\/(?<foo>[0-9]+)/, () => {})
+
+    router.use(/\/page_([0-9]+)/, subRouter)
+
+    const routes = router.getRoutes()
+
+    assert.deepStrictEqual(routes, [
+      {
+        name: 'router',
+        path: /\/page_([0-9]+)/,
+        methods: undefined,
+        keys: [{ name: 0 }],
+        options: { strict: undefined, caseSensitive: undefined, end: false },
+        router: [{
+          name: 'handle',
+          path: /\/(?<foo>[0-9]+)/,
+          methods: ['GET'],
+          keys: [{ name: 'foo' }],
+          options: { strict: undefined, caseSensitive: undefined, end: true },
+          router: undefined
+        }]
+      }
+    ])
+  })
+
+  it('should return keys for dynamic routes', function () {
+    const router = new Router()
+    const subRouter = new Router()
+    const anotherSubRouter = new Router()
+
+    subRouter.get('/api', () => {})
+    anotherSubRouter.get('/api2', () => {})
+
+    router.use('/:test', subRouter)
+    router.use(['/:lang', '/ls'], anotherSubRouter)
+
+    const routes = router.getRoutes()
+
+    assert.deepStrictEqual(routes, [
+      {
+        name: 'router',
+        path: '/:test',
+        methods: undefined,
+        keys: [{ name: 'test', type: 'param' }],
+        options: { strict: undefined, caseSensitive: undefined, end: false },
+        router: [{
+          name: 'handle',
+          path: '/api',
+          methods: ['GET'],
+          keys: undefined,
+          options: { strict: undefined, caseSensitive: undefined, end: true },
+          router: undefined
+        }]
+      }, {
+        name: 'router',
+        path: '/:lang',
+        methods: undefined,
+        keys: [{ name: 'lang', type: 'param' }],
+        options: { strict: undefined, caseSensitive: undefined, end: false },
+        router: [{
+          name: 'handle',
+          path: '/api2',
+          methods: ['GET'],
+          keys: undefined,
+          options: { strict: undefined, caseSensitive: undefined, end: true },
+          router: undefined
+        }]
+      }, {
+        name: 'router',
+        path: '/ls',
+        methods: undefined,
+        keys: undefined,
+        options: { strict: undefined, caseSensitive: undefined, end: false },
+        router: [{
+          name: 'handle',
+          path: '/api2',
+          methods: ['GET'],
+          keys: undefined,
+          options: { strict: undefined, caseSensitive: undefined, end: true },
+          router: undefined
+        }]
+      }
+    ])
+  })
+
   it('should preserve router configuration options from parent to child routers', function () {
     const router = new Router({ strict: true, caseSensitive: true })
     const inner = new Router({ strict: true, caseSensitive: false, end: false })

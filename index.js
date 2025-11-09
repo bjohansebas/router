@@ -14,6 +14,7 @@
 
 const isPromise = require('is-promise')
 const Layer = require('./lib/layer')
+const { MATCHING_GROUP_REGEXP } = require('./lib/layer')
 const { METHODS } = require('node:http')
 const parseUrl = require('parseurl')
 const Route = require('./lib/route')
@@ -485,15 +486,7 @@ function collectRoutes (stack, options) {
 
       if (Array.isArray(layer.pathPatterns)) {
         for (const pathPattern of layer.pathPatterns) {
-          let keys
-
-          if (!(pathPattern instanceof RegExp)) {
-            // TODO: keys for regex paths
-            const pathKeys = pathRegexp.pathToRegexp(pathPattern).keys
-            if (pathKeys.length > 0) {
-              keys = pathKeys
-            }
-          }
+          const keys = extractPatternKeys(pathPattern)
 
           routes.push({
             name: layer.name,
@@ -505,13 +498,7 @@ function collectRoutes (stack, options) {
           })
         }
       } else {
-        let keys
-        if (!(layer.pathPatterns instanceof RegExp)) {
-          const pathKeys = pathRegexp.pathToRegexp(layer.pathPatterns).keys
-          if (pathKeys.length > 0) {
-            keys = pathKeys
-          }
-        }
+        const keys = extractPatternKeys(layer.pathPatterns)
 
         routes.push({
           name: layer.name,
@@ -532,11 +519,12 @@ function collectRoutes (stack, options) {
             layer.handle.stack,
             { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
           )
+          const keys = extractPatternKeys(pathPattern)
 
           routes.push({
             name: layer.name,
             path: pathPattern,
-            keys: undefined,
+            keys,
             methods: undefined,
             router: inner.length ? inner : undefined,
             options: { ...options, end: layer.end }
@@ -547,11 +535,12 @@ function collectRoutes (stack, options) {
           layer.handle.stack,
           { strict: layer.handle.strict, caseSensitive: layer.handle.caseSensitive }
         )
+        const keys = extractPatternKeys(layer.pathPatterns)
 
         routes.push({
           name: layer.name,
           path: layer.pathPatterns,
-          keys: undefined,
+          keys,
           methods: undefined,
           router: inner.length ? inner : undefined,
           options: { ...options, end: layer.end }
@@ -561,6 +550,28 @@ function collectRoutes (stack, options) {
   }
 
   return routes
+}
+
+function extractPatternKeys (pattern) {
+  if (pattern instanceof RegExp) {
+    const keys = []
+    let name = 0
+    let m
+    // eslint-disable-next-line no-cond-assign
+    while (m = MATCHING_GROUP_REGEXP.exec(pattern.source)) {
+      keys.push({ name: m[1] || name++ })
+    }
+
+    return keys.length > 0 ? keys : undefined
+  }
+
+  const pathKeys = pathRegexp.pathToRegexp(String(pattern)).keys
+
+  if (pathKeys && pathKeys.length > 0) {
+    return pathKeys
+  }
+
+  return undefined
 }
 
 /**
