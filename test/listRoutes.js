@@ -114,6 +114,42 @@ describe('listRoutes', function () {
     ])
   })
 
+  it('should not reflect later mutations of a registered path array', function () {
+    const router = new Router()
+    const paths = ['/a']
+
+    router.get(paths, noop)
+    paths.push('/b')
+
+    assert.deepStrictEqual(router.listRoutes(), [
+      { path: '/a', methods: ['GET', 'HEAD'], router: undefined }
+    ])
+  })
+
+  it('should not list middleware that merely has a listRoutes property', function () {
+    const router = new Router()
+
+    function metrics (req, res, next) { next() }
+    metrics.listRoutes = () => 'not routes'
+
+    router.use('/status', metrics)
+
+    assert.deepStrictEqual(router.listRoutes(), [])
+  })
+
+  it('should list mounted routers that do not implement listRoutes', function () {
+    const router = new Router()
+
+    function legacy (req, res, next) { next() }
+    legacy.stack = []
+
+    router.use('/legacy', legacy)
+
+    assert.deepStrictEqual(router.listRoutes(), [
+      { path: '/legacy', methods: undefined, router: legacy }
+    ])
+  })
+
   it('should expose mounted routers without recursing', function () {
     const router = new Router()
     const inner = new Router()

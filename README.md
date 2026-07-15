@@ -157,8 +157,7 @@ registered on this router, in registration order.
   those methods.
 - `router` is the mounted router instance for `.use(path, router)` entries,
   otherwise `undefined`. Nested routes are not resolved recursively; consumers
-  can recurse themselves by calling `router.listRoutes()` on each entry that
-  exposes one.
+  can recurse themselves by calling `router.listRoutes()`.
 
 Plain middleware functions registered with `.use()` are not listed.
 

@@ -450,7 +450,7 @@ Router.prototype.route = function route (path) {
  * matches all methods (routes registered only with `.all()`, and
  * `.use()`). `router` is the mounted router instance for
  * `.use(path, router)` layers, so consumers can recurse by calling
- * `router.listRoutes()` themselves.
+ * `router.listRoutes()` themselves when it is available.
  *
  * @return {Array<{path: string|RegExp, methods: Array<string>|undefined, router: Router|undefined}>}
  * @public
@@ -460,7 +460,7 @@ Router.prototype.listRoutes = function listRoutes () {
 
   for (const layer of this.stack) {
     const route = layer.route
-    const router = !route && typeof layer.handle.listRoutes === 'function'
+    const router = !route && Array.isArray(layer.handle.stack)
       ? layer.handle
       : undefined
 
