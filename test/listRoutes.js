@@ -53,6 +53,16 @@ describe('listRoutes', function () {
     ])
   })
 
+  it('should return empty methods for routes created without handlers', function () {
+    const router = new Router()
+
+    router.route('/draft')
+
+    assert.deepStrictEqual(router.listRoutes(), [
+      { path: '/draft', methods: [], router: undefined }
+    ])
+  })
+
   it('should return undefined methods for .all() routes', function () {
     const router = new Router()
 
@@ -177,6 +187,18 @@ describe('listRoutes', function () {
 
     assert.deepStrictEqual(router.listRoutes(), [
       { path: '/', methods: undefined, router: inner }
+    ])
+  })
+
+  it('should list routers mounted at a RegExp path', function () {
+    const router = new Router()
+    const inner = new Router()
+
+    inner.get('/api', noop)
+    router.use(/^\/page_([0-9]+)/, inner)
+
+    assert.deepStrictEqual(router.listRoutes(), [
+      { path: /^\/page_([0-9]+)/, methods: undefined, router: inner }
     ])
   })
 
