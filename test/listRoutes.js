@@ -124,6 +124,19 @@ describe('listRoutes', function () {
     ])
   })
 
+  it('should flatten nested arrays of paths', function () {
+    const router = new Router()
+    const nested = ['/b']
+
+    router.get(['/a', nested], noop)
+    nested.push('/c')
+
+    assert.deepStrictEqual(router.listRoutes(), [
+      { path: '/a', methods: ['GET', 'HEAD'], router: undefined },
+      { path: '/b', methods: ['GET', 'HEAD'], router: undefined }
+    ])
+  })
+
   it('should not reflect later mutations of a registered path array', function () {
     const router = new Router()
     const paths = ['/a']
