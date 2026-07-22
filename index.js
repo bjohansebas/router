@@ -17,6 +17,7 @@ const Layer = require('./lib/layer')
 const { METHODS } = require('node:http')
 const parseUrl = require('parseurl')
 const Route = require('./lib/route')
+const { staticKey, annotate } = require('./lib/plan')
 const debug = require('debug')('router')
 const deprecate = require('depd')('router')
 
@@ -68,6 +69,11 @@ function Router (options) {
   router.params = {}
   router.strict = opts.strict
   router.stack = []
+
+  // compiled match plan (RFC 000): opt-out with { compile: false } to fall
+  // back to the pure linear scan for bisection
+  router.compile = opts.compile
+  router._annotated = -1
 
   return router
 }
@@ -165,6 +171,13 @@ Router.prototype.handle = function handle (req, res, callback) {
   // middleware and routes
   const stack = this.stack
 
+  // lazily (re)build the compiled plan when the route table changes
+  const compile = this.compile !== false
+  if (compile && this._annotated !== stack.length) {
+    annotate(stack, this.caseSensitive, this.strict)
+    this._annotated = stack.length
+  }
+
   // manage inter-router variables
   const parentParams = req.params
   const parentUrl = req.baseUrl || ''
@@ -227,6 +240,11 @@ Router.prototype.handle = function handle (req, res, callback) {
       return done(layerError)
     }
 
+    // canonical key of the request path for the static fast-skip
+    const pathKey = compile
+      ? staticKey(path, self.caseSensitive, self.strict)
+      : null
+
     // find next matching layer
     let layer
     let match
@@ -234,6 +252,13 @@ Router.prototype.handle = function handle (req, res, callback) {
 
     while (match !== true && idx < stack.length) {
       layer = stack[idx++]
+
+      // static fast-skip: a static route whose key differs from the request
+      // path cannot match — skip it without running its regexp
+      if (pathKey !== null && layer._staticKey !== undefined && layer._staticKey !== pathKey) {
+        continue
+      }
+
       match = matchLayer(layer, path)
       route = layer.route
 
