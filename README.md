@@ -8,6 +8,42 @@
 
 Simple middleware-style router
 
+## Compiled dispatch (O(1) static / O(path) parametric)
+
+The router no longer scans its whole stack layer-by-layer on every request.
+The stack is compiled — lazily, on first dispatch, and rebuilt when routes are
+added — into an ordered plan:
+
+- **Runs** are maximal contiguous sequences of route layers with no middleware
+  between them. Middleware stays as ordered barriers between runs, so its
+  prefix-match / `req.url`-trimming semantics are untouched.
+- Within a run, static routes go into an **exact-match map** — O(1) lookup by
+  the request path.
+- Parametric routes go into a per-run **segment radix** — O(path length)
+  lookup, resolved in **registration order** (Express's contract, *not*
+  specificity), with backtracking across static/param forks.
+- RegExp paths (and anything the radix can't express) keep the linear fallback,
+  so nothing regresses.
+
+This is a **pure optimisation**: for any request the compiled path visits the
+same layers, in the same order, building the same params as the old linear
+scan. That equivalence is fuzzed in `test/compile.js` (a `compile: false`
+router is the oracle). If you ever need the old behaviour, construct the router
+with `new Router({ compile: false })`.
+
+### Benchmark
+
+`npm run bench` — hit-last dispatch, compiled vs. `compile: false`:
+
+| routes | static (legacy → compiled) | parametric (legacy → compiled) |
+| -----: | -------------------------- | ------------------------------ |
+|    100 | 19 µs → 2.5 µs (**7.6×**)  | 24 µs → 4.4 µs (**5.4×**)      |
+|   1000 | 357 µs → 2.9 µs (**124×**) | 358 µs → 4.2 µs (**85×**)      |
+
+The compiled path stays flat as the route table grows; the linear scan grows
+O(n). (At very small tables the radix's segmentation overhead isn't yet
+amortised — the crossover is between 10 and 100 routes.)
+
 ## Installation
 
 This is a [Node.js](https://nodejs.org/en/) module available through the

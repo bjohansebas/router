@@ -38,6 +38,7 @@
     "node": ">= 18"
   },
   "scripts": {
+    "bench": "node benchmark/dispatch.js",
     "lint": "standard",
     "test": "mocha --reporter spec --check-leaks test/",
     "test:debug": "mocha --reporter spec --check-leaks test/ --inspect --inspect-brk",
