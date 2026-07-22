@@ -30,6 +30,7 @@ const slice = Array.prototype.slice
 const flatten = Array.prototype.flat
 const methods = METHODS.map((method) => method.toLowerCase())
 const EMPTY_CANDIDATES = []
+const TRAILING_SLASH_REGEXP = /\/+$/
 
 /**
  * Expose `Router`.
@@ -274,11 +275,15 @@ Router.prototype.handle = function handle (req, res, callback) {
         runList = null
       }
 
-      // entering a pure-static run: O(1) map lookup instead of scanning it
+      // entering a radix-able run: resolve its candidates directly — the
+      // static map (O(1)) plus the radix (O(path)) — instead of scanning it
       if (runList === null && runStart !== undefined) {
         const run = runStart.get(idx)
-        if (run !== undefined && run.dynamic.length === 0 && run.regexp.length === 0) {
-          runList = run.staticMap.get(pathKey) || EMPTY_CANDIDATES
+        if (run !== undefined && run.radixable) {
+          const statics = run.staticMap.get(pathKey)
+          runList = run.dynamic.length === 0
+            ? (statics || EMPTY_CANDIDATES)
+            : mergeCandidates(statics, run.radix.findAll(pathSegments(path, self.strict)))
           runPtr = 0
           runEnd = run.end
           runBegin = run.start
@@ -551,6 +556,64 @@ function getPathname (req) {
   } catch (err) {
     return undefined
   }
+}
+
+/**
+ * Split a request pathname into radix segments, loosening a trailing slash
+ * when not strict so it matches the same routes the layer regexps would.
+ *
+ * @param {string} pathname
+ * @param {boolean} strict
+ * @return {Array}
+ * @private
+ */
+
+function pathSegments (pathname, strict) {
+  let p = pathname
+
+  if (!strict && p.length > 1) {
+    p = p.replace(TRAILING_SLASH_REGEXP, '') || '/'
+  }
+
+  return p.slice(1).split('/')
+}
+
+/**
+ * Merge the static-map hit (ascending stack indexes) with the radix candidates
+ * (ascending `{ index }`) into a single registration-ordered index list.
+ *
+ * @param {number[]|undefined} statics
+ * @param {Array} params
+ * @return {number[]}
+ * @private
+ */
+
+function mergeCandidates (statics, params) {
+  if (params.length === 0) {
+    return statics || EMPTY_CANDIDATES
+  }
+
+  if (statics === undefined) {
+    const out = new Array(params.length)
+    for (let i = 0; i < params.length; i++) {
+      out[i] = params[i].index
+    }
+    return out
+  }
+
+  const out = []
+  let si = 0
+  let pi = 0
+
+  while (si < statics.length || pi < params.length) {
+    if (pi >= params.length || (si < statics.length && statics[si] < params[pi].index)) {
+      out.push(statics[si++])
+    } else {
+      out.push(params[pi++].index)
+    }
+  }
+
+  return out
 }
 
 /**

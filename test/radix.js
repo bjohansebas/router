@@ -86,6 +86,32 @@ describe('radix index (phase 2)', function () {
     })
   })
 
+  describe('findAll', function () {
+    it('should enumerate every route sharing a segment shape, in order', function () {
+      // same shape, different param names (e.g. GET /user/:user + PUT /user/:id)
+      const t = new RadixTree()
+      t.add('/user/:user', 'A', 0)
+      t.add('/user/:id', 'B', 1)
+
+      // findAll enumerates candidate stack indexes (the dispatcher confirms
+      // params via each layer's own matcher), so it returns index/keys/values
+      const all = t.findAll(seg('/user/bob'))
+      assert.deepStrictEqual(all.map(function (c) { return c.index }), [0, 1])
+      assert.deepStrictEqual(all[0].keys, ['user'])
+      assert.deepStrictEqual(all[1].keys, ['id'])
+      assert.deepStrictEqual(all[0].values, ['bob'])
+    })
+
+    it('should enumerate static and param overlaps in registration order', function () {
+      const t = new RadixTree()
+      t.add('/users/:id', 'PARAM', 0)
+      t.add('/users/list', 'STATIC', 1)
+
+      assert.deepStrictEqual(t.findAll(seg('/users/list')).map(function (c) { return c.index }), [0, 1])
+      assert.deepStrictEqual(t.findAll(seg('/users/42')).map(function (c) { return c.index }), [0])
+    })
+  })
+
   describe('differential fuzzing vs the router (winner + params)', function () {
     it('should agree with the linear router on random tables', function () {
       // deterministic PRNG (no Math.random) so failures reproduce
