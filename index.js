@@ -17,7 +17,7 @@ const Layer = require('./lib/layer')
 const { METHODS } = require('node:http')
 const parseUrl = require('parseurl')
 const Route = require('./lib/route')
-const { staticKey, annotate } = require('./lib/plan')
+const { staticKey, annotate, buildPlan } = require('./lib/plan')
 const debug = require('debug')('router')
 const deprecate = require('depd')('router')
 
@@ -29,6 +29,7 @@ const deprecate = require('depd')('router')
 const slice = Array.prototype.slice
 const flatten = Array.prototype.flat
 const methods = METHODS.map((method) => method.toLowerCase())
+const EMPTY_CANDIDATES = []
 
 /**
  * Expose `Router`.
@@ -160,6 +161,11 @@ Router.prototype.handle = function handle (req, res, callback) {
   debug('dispatching %s %s', req.method, req.url)
 
   let idx = 0
+  let runList = null
+  let runPtr = 0
+  let runEnd = 0
+  let runBegin = 0
+  let runKey = null
   let methods
   const protohost = getProtohost(req.url) || ''
   let removed = ''
@@ -175,6 +181,14 @@ Router.prototype.handle = function handle (req, res, callback) {
   const compile = this.compile !== false
   if (compile && this._annotated !== stack.length) {
     annotate(stack, this.caseSensitive, this.strict)
+    const plan = buildPlan(stack, this.caseSensitive, this.strict)
+    const runStart = new Map()
+    for (let s = 0; s < plan.length; s++) {
+      if (plan[s].kind === 'run') {
+        runStart.set(plan[s].start, plan[s])
+      }
+    }
+    this._runStart = runStart
     this._annotated = stack.length
   }
 
@@ -249,14 +263,45 @@ Router.prototype.handle = function handle (req, res, callback) {
     let layer
     let match
     let route
+    const runStart = compile ? self._runStart : undefined
 
     while (match !== true && idx < stack.length) {
-      layer = stack[idx++]
+      // req.url was altered mid-run: the cached candidates are for the old
+      // path — abandon them and resume the idx scan just past the last one
+      // processed, now with the new path
+      if (runList !== null && runKey !== pathKey) {
+        idx = runPtr > 0 ? runList[runPtr - 1] + 1 : runBegin
+        runList = null
+      }
 
-      // static fast-skip: a static route whose key differs from the request
-      // path cannot match — skip it without running its regexp
-      if (pathKey !== null && layer._staticKey !== undefined && layer._staticKey !== pathKey) {
-        continue
+      // entering a pure-static run: O(1) map lookup instead of scanning it
+      if (runList === null && runStart !== undefined) {
+        const run = runStart.get(idx)
+        if (run !== undefined && run.dynamic.length === 0 && run.regexp.length === 0) {
+          runList = run.staticMap.get(pathKey) || EMPTY_CANDIDATES
+          runPtr = 0
+          runEnd = run.end
+          runBegin = run.start
+          runKey = pathKey
+        }
+      }
+
+      if (runList !== null) {
+        if (runPtr >= runList.length) {
+          // run exhausted: skip past it and resume the normal walk
+          idx = runEnd + 1
+          runList = null
+          continue
+        }
+        layer = stack[runList[runPtr++]]
+      } else {
+        layer = stack[idx++]
+
+        // static fast-skip (mixed runs): a static route whose key differs
+        // from the request path cannot match — skip without its regexp
+        if (pathKey !== null && layer._staticKey !== undefined && layer._staticKey !== pathKey) {
+          continue
+        }
       }
 
       match = matchLayer(layer, path)
